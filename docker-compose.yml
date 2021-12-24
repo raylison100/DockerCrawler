@@ -1,0 +1,138 @@
+version: "3.8"
+
+services:
+  # postgres:
+  #   image: postgres:11.2
+  #   container_name: postgres
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_USER: root
+  #     POSTGRES_PASSWORD: root
+  #     POSTGRES_DB: crawler
+  #     PGDATA: /var/lib/postgresql/data/pgdata
+  #   volumes:
+  #     - postgres:/var/lib/postgresql/data/pgdata
+  #   networks:
+  #     - app-network
+
+  mysql:
+    image: mysql:5.7
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    container_name: mysql
+    environment:
+      MYSQL_DATABASE: crawler
+      MYSQL_ROOT_PASSWORD: root
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql-files
+      - dbdata:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    networks:
+      - app-network
+
+  redis-commander:
+    image: rediscommander/redis-commander
+    container_name: redis_commander
+    environment:
+      - REDIS_HOSTS=redis:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:latest
+    hostname: test_mongodb
+    container_name: mongo
+    ports:
+      - 27018:27017
+    restart: unless-stopped
+    volumes:
+      - mongodbdata:/data/db
+    networks:
+      - app-network
+
+  sites_project:
+    image: laravel-app
+    build:
+      args:
+        user: sites_project
+        uid: 1000
+      context: ./docker/ApiSites/
+      dockerfile: Dockerfile
+    container_name: sites_project
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./ApiSites/:/var/www
+    networks:
+      - app-network
+
+  sites_api:
+    image: nginx:alpine
+    restart: unless-stopped
+    container_name: sites_server
+    ports:
+      - 8001:80
+    volumes:
+      - ./ApiSites:/var/www
+      - ./docker/ApiSites/nginx:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+  gateway:
+    container_name: gateway_server
+    restart: unless-stopped
+    build:
+      context: ./docker/ApiGateway/
+      dockerfile: Dockerfile
+    volumes:
+      - ./ApiGateway/:/app
+    ports:
+      - 3000:3000
+    networks:
+      - app-network
+
+  crawler_api:
+    container_name: crawler_server
+    build:
+      context: ./docker/ApiCrawlerForm/
+      dockerfile: Dockerfile
+    volumes:
+      - ./ApiCrawlerForm/:/app
+    ports:
+      - "5000:80"
+    depends_on:
+      - mongo
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_DEBUG=1
+      - 'RUN=flask run --host=0.0.0.0 --port=80'
+    command: flask run --host=0.0.0.0 --port=80
+    links:
+      - mongo
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
+  mongodbdata:
+    driver: local

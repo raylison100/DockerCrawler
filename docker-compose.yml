@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www/
     volumes:
-      - ./ApiSites/:/var/www
+      - ../ApiSites/:/var/www
     networks:
       - app-network
 
@@ -86,7 +86,7 @@ services:
     ports:
       - 8001:80
     volumes:
-      - ./ApiSites:/var/www
+      - ../ApiSites:/var/www
       - ./docker/ApiSites/nginx:/etc/nginx/conf.d/
     networks:
       - app-network
@@ -98,7 +98,7 @@ services:
       context: ./docker/ApiGateway/
       dockerfile: Dockerfile
     volumes:
-      - ./ApiGateway/:/app
+      - ../ApiGateway/:/app
     ports:
       - 3000:3000
     networks:
@@ -110,7 +110,7 @@ services:
       context: ./docker/ApiCrawlerForm/
       dockerfile: Dockerfile
     volumes:
-      - ./ApiCrawlerForm/:/app
+      - ../ApiCrawlerForm/:/app
     ports:
       - "5000:80"
     depends_on:

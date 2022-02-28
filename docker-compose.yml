@@ -1,21 +1,6 @@
 version: "3.8"
 
 services:
-  # postgres:
-  #   image: postgres:11.2
-  #   container_name: postgres
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: root
-  #     POSTGRES_PASSWORD: root
-  #     POSTGRES_DB: crawler
-  #     PGDATA: /var/lib/postgresql/data/pgdata
-  #   volumes:
-  #     - postgres:/var/lib/postgresql/data/pgdata
-  #   networks:
-  #     - app-network
-
   mysql:
     image: mysql:5.7
     restart: unless-stopped
@@ -98,7 +83,7 @@ services:
       context: ./docker/ApiGateway/
       dockerfile: Dockerfile
     volumes:
-      - ../ApiGateway/:/app
+      - ../ApiGatewayAdonis/:/app
     ports:
       - 3000:3000
     networks:
@@ -107,10 +92,10 @@ services:
   crawler_api:
     container_name: crawler_server
     build:
-      context: ./docker/ApiCrawlerForm/
+      context: ./docker/ApiCrawllerForm/
       dockerfile: Dockerfile
     volumes:
-      - ../ApiCrawlerForm/:/app
+      - ../ApiCrawllerForm/:/app
     ports:
       - "5000:80"
     depends_on:

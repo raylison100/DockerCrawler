@@ -1,6 +1,17 @@
 version: "3.8"
 
 services:
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 9001:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
   mysql:
     image: mysql:5.7
     restart: unless-stopped
@@ -89,6 +100,19 @@ services:
     networks:
       - app-network
 
+  dashboard:
+    container_name: dashboard
+    restart: unless-stopped
+    build:
+      context: ../DashboardCrawler/
+      dockerfile: Dockerfile
+    volumes:
+      - ../DashboardCrawler/:/app
+    ports:
+      - '80:80'
+    networks:
+      - app-network
+
   crawler_api:
     container_name: crawler_server
     build:
@@ -117,6 +141,7 @@ networks:
 
 #Volumes
 volumes:
+  portainer_data: null
   dbdata:
     driver: local
   mongodbdata:
